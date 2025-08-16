@@ -33,17 +33,24 @@ fn build_floor(
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn((
-        Mesh3d(meshes.add(Rectangle::new(4.0, 4.0))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            unlit: true,
-            base_color: Color::WHITE,
-            base_color_texture: Some(asset_server.load("ground.png")),
-            ..default()
-        })),
-        Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
-    ));
+    let tile_size = 4.0;
+    let grid_size = 10;
 
+    for x in 0..grid_size {
+        for z in 0..grid_size {
+            commands.spawn((
+                Mesh3d(meshes.add(Rectangle::new(tile_size, tile_size))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    unlit: true,
+                    base_color: Color::WHITE,
+                    base_color_texture: Some(asset_server.load("ground.png")),
+                    ..default()
+                })),
+                Transform::from_xyz(x as f32 * tile_size, 0.0, z as f32 * tile_size)
+                    .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
+            ));
+        }
+    }
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
         MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
