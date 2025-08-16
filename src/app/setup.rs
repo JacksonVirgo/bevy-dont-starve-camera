@@ -46,7 +46,7 @@ fn build_floor(
                 MeshMaterial3d(materials.add(StandardMaterial {
                     unlit: true,
                     base_color: Color::WHITE,
-                    base_color_texture: Some(asset_server.load("grass.png")),
+                    base_color_texture: Some(asset_server.load("ground.png")),
                     ..default()
                 })),
                 Transform::from_xyz(
