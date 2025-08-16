@@ -36,6 +36,9 @@ fn build_floor(
     let tile_size = 4.0;
     let grid_size = 10;
 
+    let total_size = grid_size as f32 * tile_size;
+    let offset = total_size / 2.0 - tile_size / 2.0;
+
     for x in 0..grid_size {
         for z in 0..grid_size {
             commands.spawn((
@@ -43,11 +46,15 @@ fn build_floor(
                 MeshMaterial3d(materials.add(StandardMaterial {
                     unlit: true,
                     base_color: Color::WHITE,
-                    base_color_texture: Some(asset_server.load("ground.png")),
+                    base_color_texture: Some(asset_server.load("grass.png")),
                     ..default()
                 })),
-                Transform::from_xyz(x as f32 * tile_size, 0.0, z as f32 * tile_size)
-                    .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
+                Transform::from_xyz(
+                    x as f32 * tile_size - offset,
+                    0.0,
+                    z as f32 * tile_size - offset,
+                )
+                .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
             ));
         }
     }
