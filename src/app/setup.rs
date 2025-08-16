@@ -1,7 +1,7 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
 use bevy::prelude::*;
 
-use crate::{camera, entities};
+use crate::{camera, entities, utils};
 
 pub fn setup_game() {
     App::new()
@@ -46,7 +46,7 @@ fn build_floor(
                 MeshMaterial3d(materials.add(StandardMaterial {
                     unlit: true,
                     base_color: Color::WHITE,
-                    base_color_texture: Some(asset_server.load("ground.png")),
+                    base_color_texture: Some(asset_server.load("grass.png")),
                     ..default()
                 })),
                 Transform::from_xyz(
@@ -63,8 +63,12 @@ fn build_floor(
 struct CorePlugins;
 impl Plugin for CorePlugins {
     fn build(&self, app: &mut App) {
-        app.add_plugins((camera::CameraPlugin, entities::EntityPlugin))
-            .add_systems(Update, exit_on_esc)
-            .add_systems(Startup, build_floor);
+        app.add_plugins((
+            camera::CameraPlugin,
+            entities::EntityPlugin,
+            utils::UtilityPlugin,
+        ))
+        .add_systems(Update, exit_on_esc)
+        .add_systems(Startup, build_floor);
     }
 }

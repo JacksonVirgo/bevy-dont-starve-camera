@@ -1,6 +1,8 @@
-use bevy::{input::mouse::MouseWheel, prelude::*, render::camera::ScalingMode};
+use crate::camera::direction::CameraDirection;
+use bevy::{input::mouse::MouseWheel, prelude::*};
 
-#[derive(Component)]
+#[derive(Component, Default)]
+#[require(CameraDirection)]
 pub struct CameraController;
 
 #[derive(Component)]
@@ -10,51 +12,69 @@ pub struct CameraFocus;
 pub fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         CameraController,
+        CameraDirection::North,
         Camera3d::default(),
-        Projection::from(OrthographicProjection {
-            scaling_mode: ScalingMode::FixedVertical {
-                viewport_height: 20.0,
-            },
-            ..OrthographicProjection::default_3d()
-        }),
-        Transform::from_xyz(20.0, 20.0, 20.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(0.0, 10.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
 
 pub fn camera_movement(
-    q_focus: Query<&Transform, With<CameraFocus>>,
-    mut q_camera: Query<&mut Transform, (With<CameraController>, Without<CameraFocus>)>,
+    q_focus: Query<&Transform, (With<CameraFocus>, Without<CameraController>)>,
+    mut q_camera: Query<(&mut Transform, &CameraDirection), With<CameraController>>,
 ) {
     if let Ok(focus) = q_focus.single() {
-        for mut camera in q_camera.iter_mut() {
-            let offset = Vec3::new(0.0, 4.5, -9.0);
-            camera.translation = camera.translation + offset;
-            camera.look_at(focus.translation, Vec3::Y);
+        for (mut cam_tf, dir) in q_camera.iter_mut() {
+            let r_xy = 10.0;
+            let h = 10.0;
+            cam_tf.translation = focus.translation + dir.offset(r_xy, h);
+            cam_tf.look_at(focus.translation, Vec3::Y);
+        }
+    }
+}
+
+pub fn camera_direction_input(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut q_camera: Query<&mut CameraDirection, With<CameraController>>,
+) {
+    for mut direction in q_camera.iter_mut() {
+        if keyboard.just_pressed(KeyCode::KeyQ) {
+            println!("Q");
+            *direction = direction.prev();
+        }
+        if keyboard.just_pressed(KeyCode::KeyE) {
+            println!("E");
+            *direction = direction.next();
         }
     }
 }
 
 pub fn camera_scroll_zoom(
-    mut scroll_evr: EventReader<MouseWheel>,
-    mut q_camera: Query<&mut Projection, With<CameraController>>,
+    mut scroll: EventReader<MouseWheel>,
+    mut q_cam: Query<(&mut Transform, &mut CameraDirection), With<CameraController>>,
+    q_focus: Query<&Transform, (With<CameraFocus>, Without<CameraController>)>,
 ) {
-    for ev in scroll_evr.read() {
-        for mut proj in q_camera.iter_mut() {
-            if let Projection::Orthographic(ref mut ortho) = *proj {
-                let zoom_speed = 1.5;
-                match ortho.scaling_mode {
-                    ScalingMode::FixedVertical {
-                        mut viewport_height,
-                    } => {
-                        viewport_height -= ev.y * zoom_speed;
-                        viewport_height = viewport_height.clamp(5.0, 50.0);
-                        ortho.scaling_mode = ScalingMode::FixedVertical {
-                            viewport_height: viewport_height,
-                        }
-                    }
-                    _ => {}
-                };
-            }
+    let speed = 1.0;
+    let min = 5.0;
+    let max = 30.0;
+
+    let Ok(focus) = q_focus.single() else {
+        return;
+    };
+
+    for ev in scroll.read() {
+        for (mut cam_tf, dir) in q_cam.iter_mut() {
+            // recover current h and r_xy
+            let diff = cam_tf.translation - focus.translation;
+            let h = diff.y;
+            let r_xy = Vec2::new(diff.x, diff.z).length();
+
+            // zoom target with clamped height, keep tilt by scaling r_xy proportionally
+            let new_h = (h - ev.y * speed).clamp(min, max);
+            let ratio = if h.abs() > 1e-4 { new_h / h } else { 1.0 };
+            let new_r_xy = r_xy * ratio;
+
+            cam_tf.translation = focus.translation + dir.offset(new_r_xy, new_h);
+            cam_tf.look_at(focus.translation, Vec3::Y);
         }
     }
 }
