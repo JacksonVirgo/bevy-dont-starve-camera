@@ -13,7 +13,7 @@ fn spawn_player(
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    let texture_handle = asset_server.load("player.png"); // your sprite texture
+    let texture_handle = asset_server.load("player.png");
 
     let tile_size = 4.0;
 
@@ -74,6 +74,7 @@ fn move_player(
     let speed = 5.0;
     for mut tf in q_player.iter_mut() {
         tf.translation += dir * speed * time.delta_secs();
+        println!("{:?}", tf.translation);
     }
 }
 
