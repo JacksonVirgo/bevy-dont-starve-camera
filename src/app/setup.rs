@@ -1,7 +1,7 @@
 #![cfg_attr(windows, windows_subsystem = "windows")]
 use bevy::prelude::*;
 
-use crate::camera;
+use crate::{camera, entities};
 
 pub fn setup_game() {
     App::new()
@@ -51,17 +51,12 @@ fn build_floor(
             ));
         }
     }
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-        MeshMaterial3d(materials.add(Color::srgb_u8(124, 144, 255))),
-        Transform::from_xyz(0.0, 0.5, 0.0),
-    ));
 }
 
 struct CorePlugins;
 impl Plugin for CorePlugins {
     fn build(&self, app: &mut App) {
-        app.add_plugins(camera::CameraPlugin)
+        app.add_plugins((camera::CameraPlugin, entities::EntityPlugin))
             .add_systems(Update, exit_on_esc)
             .add_systems(Startup, build_floor);
     }
