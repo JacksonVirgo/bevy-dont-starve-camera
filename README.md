@@ -1,2 +1,3 @@
-# bevy-dont-starve-camera
-Don't Starve-like camera implementation in Bevy
+# Bevy - Don't Starve Camera
+
+Bevy implementation of Don't Starves camera and movement system.
